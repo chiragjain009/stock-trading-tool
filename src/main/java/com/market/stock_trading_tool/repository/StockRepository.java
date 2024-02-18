@@ -1,7 +1,7 @@
 package com.market.stock_trading_tool.repository;
 
-import com.market.stock_trading_tool.dto.Stock;
-import com.market.stock_trading_tool.dto.Trade;
+import com.market.stock_trading_tool.dto.StockDTO;
+import com.market.stock_trading_tool.dto.TradeDTO;
 import com.market.stock_trading_tool.exception.TradeException;
 
 import java.util.List;
@@ -10,13 +10,13 @@ import java.util.Set;
 
 public interface StockRepository {
 
-    Stock addStock(Stock stock);
+    StockDTO addStock(StockDTO stock);
 
-    Optional<Stock> findBySymbol(String symbol);
+    Optional<StockDTO> findBySymbol(String symbol);
 
-    Set<Stock> getAllStocks();
+    Set<StockDTO> getAllStocks();
 
-    boolean addTrade(String symbol, Trade trade) throws TradeException;
+    boolean addTrade(String symbol, TradeDTO trade) throws TradeException;
 
-    List<Trade> getTrades(final Stock stock);
+    List<TradeDTO> getTrades(final StockDTO stock);
 }

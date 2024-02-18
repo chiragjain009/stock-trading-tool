@@ -1,10 +1,11 @@
 package com.market.stock_trading_tool.controller;
 
-import com.market.stock_trading_tool.dto.Trade;
+import com.market.stock_trading_tool.dto.TradeDTO;
 import com.market.stock_trading_tool.exception.StockMarketException;
 import com.market.stock_trading_tool.exception.TradeException;
 import com.market.stock_trading_tool.service.StockService;
 import com.market.stock_trading_tool.service.TradeService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +19,7 @@ public class StockManagementController {
     private final StockService stockService;
     private final TradeService tradeService;
 
-    public StockManagementController(StockService stockService, TradeService tradeService) {
+    public StockManagementController(@Qualifier("stockServiceImplWithSql") StockService stockService,@Qualifier("tradeServiceImplWithSql") TradeService tradeService) {
         this.stockService = stockService;
         this.tradeService = tradeService;
     }
@@ -27,7 +28,7 @@ public class StockManagementController {
     @PostMapping(path = "/trade/{symbol}",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> stockTradeForNewTrans(@PathVariable String symbol, @RequestBody Trade trade){
+    public ResponseEntity<String> stockTradeForNewTrans(@PathVariable String symbol, @RequestBody TradeDTO trade){
          try{
              tradeService.tradeStock(symbol,trade);
              return ResponseEntity.created(null).build();

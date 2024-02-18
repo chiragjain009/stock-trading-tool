@@ -4,9 +4,11 @@ import com.market.stock_trading_tool.dto.StockDTO;
 import com.market.stock_trading_tool.dto.StockType;
 import com.market.stock_trading_tool.dto.TradeDTO;
 import com.market.stock_trading_tool.exception.StockMarketException;
-import com.market.stock_trading_tool.repository.StockRepository;
+import com.market.stock_trading_tool.repository.StockRepositoryWithSql;
+import com.market.stock_trading_tool.service.CoustomMapper;
 import com.market.stock_trading_tool.service.StockService;
 import com.market.stock_trading_tool.service.TradeService;
+import com.market.stock_trading_tool.service.UserMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -14,13 +16,15 @@ import java.util.List;
 import java.util.Set;
 
 @Service
-public class StockServiceImpl implements StockService {
-    private StockRepository stockRepository;
+public class StockServiceImplWithSql implements StockService {
+    private StockRepositoryWithSql stockRepository;
     private TradeService tradeService;
+    private CoustomMapper userMapper;
 
-    public StockServiceImpl(StockRepository stockRepository,@Qualifier("tradeServiceImpl") TradeService tradeService) {
+    public StockServiceImplWithSql(StockRepositoryWithSql stockRepository, CoustomMapper userMapper, @Qualifier("tradeServiceImplWithSql") TradeService tradeService) {
         this.stockRepository = stockRepository;
         this.tradeService = tradeService;
+        this.userMapper = userMapper;
     }
 
     @Override
@@ -28,7 +32,9 @@ public class StockServiceImpl implements StockService {
         if(price<=0d){
             throw new StockMarketException("Price is not valid");
         }
-        final StockDTO stock=stockRepository.findBySymbol(symbol).orElseThrow(()->new StockMarketException("Stock not found"));
+
+        final StockDTO stock=userMapper.stockEntityToStockDTO(stockRepository.getById(symbol));
+        if(stock==null)throw new StockMarketException("Stock not found");
         return getDividend(stock)/price;
     }
 
@@ -37,9 +43,8 @@ public class StockServiceImpl implements StockService {
         if (price <= 0d) {
             throw new StockMarketException("Price is not valid");
         }
-
-        final StockDTO stock = stockRepository.findBySymbol(symbol)
-                .orElseThrow(() -> new StockMarketException("Stock not found for Symbol"));
+        final StockDTO stock=userMapper.stockEntityToStockDTO(stockRepository.getById(symbol));
+        if(stock==null)throw new StockMarketException("Stock not found for Symbol");
 
         final Double dividend = this.getDividend(stock);
 
@@ -52,8 +57,8 @@ public class StockServiceImpl implements StockService {
 
     @Override
     public Double getVolumeWeightedStock(String symbol) throws StockMarketException {
-        final StockDTO stock = stockRepository.findBySymbol(symbol)
-                .orElseThrow(() -> new StockMarketException("Stock not found for Symbol"));
+        final StockDTO stock=userMapper.stockEntityToStockDTO(stockRepository.getById(symbol));
+        if(stock==null)throw new StockMarketException("Stock not found for Symbol");
 
         final List<TradeDTO> validTrades = tradeService.getLatestTrades(stock);
         int totalQuantity = 0;
@@ -75,9 +80,10 @@ public class StockServiceImpl implements StockService {
     @Override
     public Double calculateGeometricMean() {
 
-        final Set<StockDTO> listOfStocks=stockRepository.getAllStocks();
+        final List<StockDTO> listOfStocks=userMapper.stockEntityListToStockDTOList(stockRepository.findAll());
+
         final List<TradeDTO> allTrades=listOfStocks.stream()
-                .map(stockRepository::getTrades).flatMap(List::stream)
+                .map(tradeService::getTrades).flatMap(List::stream)
                 .toList();
 
         if (allTrades.size() > 0) {

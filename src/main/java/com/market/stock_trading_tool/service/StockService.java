@@ -1,6 +1,5 @@
 package com.market.stock_trading_tool.service;
 
-import com.market.stock_trading_tool.dto.Stock;
 import com.market.stock_trading_tool.exception.StockMarketException;
 
 public interface StockService {

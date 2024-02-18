@@ -1,10 +1,17 @@
 package com.market.stock_trading_tool.service.impl;
 
+
 import com.market.stock_trading_tool.dto.StockDTO;
 import com.market.stock_trading_tool.dto.TradeDTO;
+import com.market.stock_trading_tool.entity.StockEntity;
+import com.market.stock_trading_tool.entity.TradeEntity;
 import com.market.stock_trading_tool.exception.TradeException;
-import com.market.stock_trading_tool.repository.StockRepository;
+import com.market.stock_trading_tool.repository.StockRepositoryWithSql;
+import com.market.stock_trading_tool.repository.TradeRepositoryWithSql;
+import com.market.stock_trading_tool.service.CoustomMapper;
 import com.market.stock_trading_tool.service.TradeService;
+import com.market.stock_trading_tool.service.UserMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -14,12 +21,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class TradeServiceImpl implements TradeService {
+public class TradeServiceImplWithSql implements TradeService {
 
-    private StockRepository stockRepository;
+    private StockRepositoryWithSql stockRepository;
+    private TradeRepositoryWithSql tradeRepository;
+    @Autowired
+    private CoustomMapper userMapper;
 
-    public TradeServiceImpl(StockRepository stockRepository) {
+
+    public TradeServiceImplWithSql(StockRepositoryWithSql stockRepository, TradeRepositoryWithSql tradeRepository) {
         this.stockRepository = stockRepository;
+        this.tradeRepository = tradeRepository;
     }
 
     @Override
@@ -27,13 +39,16 @@ public class TradeServiceImpl implements TradeService {
         if(trade == null || trade.getQuantity() <= 0 || trade.getTradePrice() <= 0) {
             throw new TradeException("Request is not valid");
         }
-        stockRepository.addTrade(stockSymbol,trade);
+        TradeEntity tradeEntity=userMapper.tradeDTOToTradeEntity(trade);
+        tradeEntity.setStock(stockRepository.getById(stockSymbol));
+        tradeRepository.save(tradeEntity);
 
     }
 
     @Override
     public List<TradeDTO> getTrades(StockDTO stock) {
-        return stockRepository.getTrades(stock);
+       StockEntity stockEntity=stockRepository.getById(stock.getSymbol());
+       return userMapper.tradeEntityListToTradeDTOList(stockEntity.getTrades());
     }
 
     @Override
